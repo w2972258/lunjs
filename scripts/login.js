@@ -145,7 +145,11 @@ async function loginWithAccount(username, password, index) {
 async function attemptLogin(username, password, index, retryCount) {
   const browser = await chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+      '--disable-blink-features=AutomationControlled', // 核心：隐藏机器人特征
+      '--no-sandbox', 
+      '--disable-setuid-sandbox'
+    ]  
   });
 
   const context = await browser.newContext({
@@ -193,16 +197,19 @@ async function attemptLogin(username, password, index, retryCount) {
     // 填充账户信息
     console.log(`[${username}] 填写登录信息...`);
     
-    // 清空并填写用户名
+    // 清空并模拟人类敲击填写用户名
     await userInput.click({ timeout: 10_000 });
-    await userInput.evaluate(el => el.value = ''); // 更可靠的清空方式
-    await userInput.fill(username, { timeout: 10_000 });
+    await userInput.evaluate(el => el.value = '');
+    await userInput.type(username, { delay: Math.random() * 100 + 50, timeout: 15_000 });
     
-    // 清空并填写密码
-    await passInput.click({ timeout: 10_000 });
-    await passInput.evaluate(el => el.value = ''); // 更可靠的清空方式
-    await passInput.fill(password, { timeout: 10_000 });
+    // 随机停顿一下再输密码
+    await page.waitForTimeout(Math.floor(Math.random() * 1000) + 500);
 
+    // 清空并模拟人类敲击填写密码
+    await passInput.click({ timeout: 10_000 });
+    await passInput.evaluate(el => el.value = '');
+    await passInput.type(password, { delay: Math.random() * 100 + 50, timeout: 15_000 });
+    
     // 3) 点击登录按钮
     const loginBtn = page.locator('button[type="submit"], button:has-text("登录"), button:has-text("Sign in"), button:has-text("Log in")').first();
     await loginBtn.waitFor({ state: 'visible', timeout: 15_000 });
@@ -221,6 +228,8 @@ async function attemptLogin(username, password, index, retryCount) {
       return null; // 不抛出异常，我们会通过其他方式检查状态
     });
 
+    // 随机等待 2-4 秒再点击登录按钮，避开秒点检测
+    await page.waitForTimeout(Math.floor(Math.random() * 2000) + 2000);
     await loginBtn.click({ timeout: 10_000 });
     
     // 等待导航完成或超时
