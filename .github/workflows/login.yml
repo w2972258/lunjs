@@ -37,7 +37,7 @@ jobs:
       - name: Setup and Start Xray
         run: |
           curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-          unzip xray.zip
+          unzip -o xray.zip
           echo '${{ secrets.XRAY_CONFIG }}' > config.json
           ./xray run -c config.json > xray.log 2>&1 &
           sleep 5 # 等待5秒确保代理就绪
