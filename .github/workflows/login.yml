@@ -31,7 +31,25 @@ jobs:
           npm install
           npx playwright install --with-deps chromium
 
+      # ----------------------------------------
+      # [新增步骤] 下载、配置并后台启动 Xray 代理
+      # ----------------------------------------
+      - name: Setup and Start Xray
+        run: |
+          curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+          unzip xray.zip
+          echo '${{ secrets.XRAY_CONFIG }}' > config.json
+          ./xray run -c config.json > xray.log 2>&1 &
+          sleep 5 # 等待5秒确保代理就绪
+
       - name: Run login
+        id: login # 加上 ID，确保最后一步的失败检测能正确识别
+        # ----------------------------------------
+        # [新增变量] 强制让 Node.js 脚本走本地代理
+        # ----------------------------------------
+        env:
+          HTTP_PROXY: http://127.0.0.1:1080
+          HTTPS_PROXY: http://127.0.0.1:1080
         run: |
           node -v
           npm -v
@@ -45,6 +63,7 @@ jobs:
           name: screenshots-and-logs
           path: |
             *.png
+            xray.log # [新增] 把 Xray 的运行日志也存下来，万一代理不通方便排错
           if-no-files-found: ignore
 
       - name: Fail job if script failed
