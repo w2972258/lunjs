@@ -145,6 +145,7 @@ async function loginWithAccount(username, password, index) {
 async function attemptLogin(username, password, index, retryCount) {
   const browser = await chromium.launch({
     headless: true,
+    proxy: { server: 'http://127.0.0.1:1080' }, // 👈 显式地把代理塞进浏览器里！
     args: [
       '--disable-blink-features=AutomationControlled', // 核心：隐藏机器人特征
       '--no-sandbox', 
